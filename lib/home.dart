@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:tflite/tflite.dart';
 import 'dbpokemon.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -8,11 +10,42 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String pkmn_name = "Charizard";
+  final picker = ImagePicker();
+  String pkmnName = "Charizard";
+  bool _loading = false;
+  List _output;
+  File _image;
+
+  pickImage() async {
+    var image = await picker.getImage(source: ImageSource.camera);
+    if (image == null) return null;
+    setState(() {
+      _image = File(image.path);
+    });
+    classifyImage(_image);
+  }
+
+  classifyImage(File image) async {
+    var output = await Tflite.runModelOnImage(
+        path: image.path,
+        numResults: 5,
+        threshold: 0.5,
+        imageMean: 127.5,
+        imageStd: 127.5);
+
+    setState(() {
+      _loading = false;
+      _output = output;
+    });
+  }
+
+  loadModel() async {
+    await Tflite.loadModel(
+        model: 'assets/model.tflite', labels: 'assets/labels.txt');
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool _loading = true;
     return Scaffold(
         body: Stack(
           children: <Widget>[
@@ -21,11 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.red, Colors.black],
+                  colors: [Colors.red[900], Colors.grey[850]],
                 ),
               ),
             ),
-            _loading == true
+            _loading == false
                 ? Center(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -73,7 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           FloatingActionButton.extended(
             onPressed: () {
-              return (DbPokemon());
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => DbPokemon()));
               // Buscar en la base de datos de los pokemons ya indentificados
             },
             label: const Text('Search'),
