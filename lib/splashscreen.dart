@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pokedex/dbpokemon.dart';
+import 'package:pokedex/login.dart';
 import 'package:splashscreen/splashscreen.dart';
 
 import 'home.dart';
@@ -15,7 +16,7 @@ class _MySplashState extends State<MySplash> {
   Widget build(BuildContext context) {
     return SplashScreen(
       seconds: 3,
-      navigateAfterSeconds: MyHomePage(),
+      navigateAfterSeconds: LoginScreen(),
       image: Image.asset("assets/pokemon.png"),
       photoSize: 220.0,
       title: Text(
