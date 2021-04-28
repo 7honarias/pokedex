@@ -1,47 +1,62 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:pokedex/mpokemon.dart';
 import 'constants.dart';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
 
 class DbPokemon extends StatefulWidget {
   @override
   _DbPokemonState createState() => _DbPokemonState();
 }
 
-class SentAna {
-  final String name;
-  final String url;
-
-  SentAna({this.name, this.url});
-
-  factory SentAna.fromJson(Map<String, dynamic> json) {
-    return SentAna(name: json['name'], url: json['url']);
-  }
-}
-
 class _DbPokemonState extends State<DbPokemon> {
-  // final CategoriesScroller categoriesScroller = CategoriesScroller();
   ScrollController controller = ScrollController();
-  bool closeTopContainer = false;
-  double topContainer = 0;
+  var url = 'https://pokeapi.co/api/v2/pokemon?limit=2';
+  List<ModelPokemon> data = <ModelPokemon>[];
 
-  String urlApi = 'https://pokeapi.co/api/v2/pokemon?limit=100';
-
-  Future<dynamic> getPost(urlApi) async {
-    final response = await http.get('$urlApi');
+  Future<List<ModelPokemon>> getPokeUrl() async {
+    var response = await http.get(url);
     if (response.statusCode == 200) {
-      print('here');
-      return SentAna.fromJson(json.decode(response.body));
+      var jsonResponse = convert.jsonDecode(response.body)['results'];
+      var registros = <ModelPokemon>[];
+      for (jsonResponse in jsonResponse) {
+        registros.add(ModelPokemon.fromJson(jsonResponse));
+      }
+      print('Number of books about http: $registros.');
+      return registros;
     } else {
-      print("Error con la respuesta");
+      print('Request failed with status: ${response.statusCode}.');
+      return null;
     }
   }
 
+  getDataPoke(String urlPoke) async {
+    var url = urlPoke;
+
+    // Await the http get response, then decode the json-formatted response.
+    var response = await http.get(url);
+    if (response.statusCode == 200) {
+      var jsonResponse = convert.jsonDecode(response.body);
+      var name = jsonResponse['name'];
+      var image = jsonResponse['sprites']['front_default'];
+      var type = jsonResponse['types'][0]['type']['name'];
+      POKE_DATA.add({'name': name, 'type': type, 'image': image});
+      print('Number of books about http: $name.');
+    } else {
+      print('Request failed with status: ${response.statusCode}.');
+    }
+  }
+
+  bool closeTopContainer = false;
+  double topContainer = 0;
+
   List<Widget> itemsData = [];
 
-  void getPostsData() {
-    print(getPost(urlApi));
+  getPostsData() {
+    data.forEach((element) {
+      getDataPoke(element.url);
+    });
+    print('here');
     List<dynamic> responseList = POKE_DATA;
     List<Widget> listItems = [];
     responseList.forEach((post) {
@@ -68,7 +83,7 @@ class _DbPokemonState extends State<DbPokemon> {
                           fontSize: 28, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      post["brand"],
+                      post["type"],
                       style: const TextStyle(fontSize: 17, color: Colors.grey),
                     ),
                     SizedBox(
@@ -93,10 +108,14 @@ class _DbPokemonState extends State<DbPokemon> {
   @override
   void initState() {
     super.initState();
-    getPostsData();
+    getPokeUrl().then((value) {
+      setState(() {
+        data.addAll(value);
+      });
+      getPostsData();
+    });
     controller.addListener(() {
       double value = controller.offset / 119;
-
       setState(() {
         topContainer = value;
         closeTopContainer = controller.offset > 50;
