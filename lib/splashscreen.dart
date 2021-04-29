@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/home.dart';
 import 'package:pokedex/dbpokemon.dart';
 import 'package:pokedex/login.dart';
 import 'package:splashscreen/splashscreen.dart';
@@ -20,7 +21,7 @@ class _MySplashState extends State<MySplash> {
       image: Image.asset("assets/pokemon.png"),
       photoSize: 220.0,
       title: Text(
-        'Bienvenido',
+        'Welcome',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 30,
