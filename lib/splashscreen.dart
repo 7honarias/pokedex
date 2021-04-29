@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pokedex/dbpokemon.dart';
+import 'package:pokedex/home.dart';
 import 'package:splashscreen/splashscreen.dart';
 
 import 'home.dart';
@@ -15,11 +15,11 @@ class _MySplashState extends State<MySplash> {
   Widget build(BuildContext context) {
     return SplashScreen(
       seconds: 3,
-      navigateAfterSeconds: MyHomePage(),
+      navigateAfterSeconds: Home(),
       image: Image.asset("assets/pokemon.png"),
       photoSize: 220.0,
       title: Text(
-        'Bienvenido',
+        'Welcome',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 30,

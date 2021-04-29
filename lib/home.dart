@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite/tflite.dart';
+
 import 'dbpokemon.dart';
 
-class MyHomePage extends StatefulWidget {
+class Home extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomeState createState() => _HomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _HomeState extends State<Home> {
   final picker = ImagePicker();
-  String pkmnName = "Charizard";
+  File _image;
   bool _loading = false;
   List _output;
-  File _image;
 
   pickImage() async {
     var image = await picker.getImage(source: ImageSource.camera);
@@ -25,10 +25,34 @@ class _MyHomePageState extends State<MyHomePage> {
     classifyImage(_image);
   }
 
+  pickGalleryImage() async {
+    var image = await picker.getImage(source: ImageSource.gallery);
+    if (image == null) return null;
+    setState(() {
+      _image = File(image.path);
+    });
+    classifyImage(_image);
+  }
+
+  @override
+  void initState() {
+    _loading = true;
+    super.initState();
+    loadModel().then((value) {
+      //set state
+    });
+  }
+
+  @override
+  void dispose() {
+    Tflite.close();
+    super.dispose();
+  }
+
   classifyImage(File image) async {
     var output = await Tflite.runModelOnImage(
         path: image.path,
-        numResults: 5,
+        numResults: 2,
         threshold: 0.5,
         imageMean: 127.5,
         imageStd: 127.5);
@@ -47,55 +71,58 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Stack(
-          children: <Widget>[
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.red, Colors.red],
-                ),
+        backgroundColor: Colors.red,
+        body: Container(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                height: 100,
               ),
-            ),
-            _loading == false
-                ? Center(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: <Widget>[
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Container(
-                            width: 300,
-                            height: 450,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(20)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  spreadRadius: 1,
-                                  blurRadius: 1,
-                                  offset: Offset(
-                                      0, 2), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                          ),
+              SizedBox(
+                height: 50,
+              ),
+              Center(
+                child: _loading
+                    ? Container(
+                        width: 300,
+                        child: Column(
+                          children: <Widget>[
+                            Image.asset('assets/pokeball.png'),
+                            SizedBox(height: 50),
+                          ],
                         ),
-                      ],
-                    ),
-                  )
-                : Container(),
-          ],
+                      )
+                    : Container(
+                        child: Column(
+                        children: <Widget>[
+                          Container(
+                            height: 250,
+                            child: Image.file(_image),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          _output != null
+                              ? Container(
+                                  padding: EdgeInsets.symmetric(vertical: 10),
+                                  child: Text('${_output[0]['label']}',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 20.0)),
+                                )
+                              : Container(),
+                        ],
+                      )),
+              ),
+            ],
+          ),
         ),
         floatingActionButton:
             Column(mainAxisAlignment: MainAxisAlignment.end, children: [
           FloatingActionButton.extended(
             onPressed: () {
-              // abrir camara para tomar foto
+              pickImage();
             },
             label: const Text('Identify'),
             icon: const Icon(Icons.add_a_photo),
@@ -106,9 +133,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           FloatingActionButton.extended(
             onPressed: () {
+              // Buscar en la base de datos de los pokemons ya indentificados
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => DbPokemon()));
-              // Buscar en la base de datos de los pokemons ya indentificados
             },
             label: const Text('Search'),
             icon: const Icon(Icons.search),
